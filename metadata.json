@@ -1,0 +1,6 @@
+{
+  "name": "WarriorLive",
+  "description": "HIPAA-compliant clinical-grade Sickle Cell Disease (SCD) health optimization platform and real-time UI state manager.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
