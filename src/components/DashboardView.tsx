@@ -82,7 +82,7 @@ export default function DashboardView({ apiResponse, profile, telemetry, onSubmi
           setWeatherData({ temp: tempC, isExtreme });
         }
       } catch (err) {
-        console.error("Failed to fetch weather", err);
+        console.warn("Failed to fetch weather", err);
       }
     }
     fetchWeather();

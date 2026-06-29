@@ -241,7 +241,7 @@ Return the result as a raw JSON matching the following schema exactly (DO NOT in
           }
         }
       } catch (geminiError) {
-        console.error("Gemini API stream evaluation error:", geminiError);
+        console.warn("Gemini API stream evaluation error:", geminiError);
         // Fall through to local heuristics
       }
     }
@@ -267,7 +267,7 @@ Return the result as a raw JSON matching the following schema exactly (DO NOT in
 
     return res.json(response);
   } catch (err: any) {
-    console.error("General API telemetry parsing error:", err);
+    console.warn("General API telemetry parsing error:", err);
     res.status(500).json({ error: "Failed to parse telemetry stream. " + err.message });
   }
 });
@@ -310,7 +310,7 @@ Never recommend Meperidine (Demerol). Emphasize hydration and hydroxyurea adhere
     
     res.json({ text: response.text });
   } catch (error: any) {
-    console.error('Chat API Error:', error);
+    console.warn('Chat API Error:', error);
     res.status(500).json({ error: error.message || 'Failed to generate response' });
   }
 });
@@ -326,7 +326,7 @@ app.get('/api/weather', async (req, res) => {
     const data = await response.json();
     res.json(data);
   } catch (error: any) {
-    console.error('Weather API Error:', error);
+    console.warn('Weather API Error:', error);
     res.status(500).json({ error: 'Failed to fetch weather' });
   }
 });

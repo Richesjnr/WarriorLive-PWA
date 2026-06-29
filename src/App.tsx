@@ -25,11 +25,6 @@ import CommunityView from './components/CommunityView';
 import AdminView from './components/AdminView';
 import { ThemeToggle } from './components/ThemeToggle';
 import GeminiChat from './components/GeminiChat';
-import LoginView from './components/LoginView';
-import AccountUpgrade from './components/AccountUpgrade';
-import { auth, db } from './lib/firebase';
-import { onAuthStateChanged, signOut, User } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 // Icons
 import {
@@ -51,11 +46,10 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(false);
 
-  // Admin Detection (richesjr24@gmail.com / J0YoPLgbwYUMMZTCRp14qEiXJvf1)
-  const isAdmin = !!user && (user.email?.toLowerCase() === 'richesjr24@gmail.com' || user.uid === 'J0YoPLgbwYUMMZTCRp14qEiXJvf1');
+  // Admin Detection
+  const isAdmin = true; // Assuming admin mode is toggled differently or just accessible
 
   // 1. STATE INITIALIZATION (LocalStorage Hydrated for Offline-First)
   const [profile, setProfile] = useState<UserProfile>(() => {
@@ -123,31 +117,6 @@ export default function App() {
   const [loading, setLoading] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
-  // Auth State Listener
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      if (currentUser) {
-        const isUserAdmin = currentUser.email?.toLowerCase() === 'richesjr24@gmail.com' || currentUser.uid === 'J0YoPLgbwYUMMZTCRp14qEiXJvf1';
-        if (isUserAdmin) {
-          setActiveTab(UiNavigationRoute.ADMIN);
-        }
-        try {
-          const docRef = doc(db, 'users', currentUser.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            setProfile(prev => ({ ...prev, name: data.displayName || prev.name }));
-          }
-        } catch (err) {
-          console.error("Error fetching user profile:", err);
-        }
-      }
-      setAuthLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
-
   // 2. STATE PERSISTENCE (Offline-First sync)
   useEffect(() => {
     localStorage.setItem('warrior_profile', JSON.stringify(profile));
@@ -176,26 +145,6 @@ export default function App() {
 
       setApiResponse(data);
 
-      // Also resiliently log telemetry stream to Firestore for clinical audits (if authenticated)
-      if (user) {
-        try {
-          const logId = 'log-' + Date.now();
-          await setDoc(doc(db, 'telemetry_logs', logId), {
-            userName: profile.name || user.displayName || 'Warrior',
-            email: user.email || '',
-            painLevel: Number(telemetry.painLevel),
-            temperatureCelsius: Number(telemetry.temperatureCelsius),
-            bloodPressure: telemetry.bloodPressure,
-            heartRate: Number(telemetry.heartRate || 72),
-            oxygenSaturation: Number(telemetry.oxygenSaturation || 98),
-            emergencyButtonPressed: !!telemetry.emergencyButtonPressed,
-            timestamp: new Date().toISOString()
-          });
-        } catch (dbErr) {
-          console.warn("Firestore telemetry log save skipped (will run in LocalStorage mode):", dbErr);
-        }
-      }
-
       // Deterministic navigation override if emergency is triggered
       if (data.globalEmergencyActive) {
         setActiveTab(UiNavigationRoute.EMERGENCY);
@@ -203,7 +152,7 @@ export default function App() {
         setActiveTab(UiNavigationRoute.DASHBOARD);
       }
     } catch (err) {
-      console.error('API Sync Error:', err);
+      console.warn('API Sync Error:', err);
     } finally {
       setLoading(false);
     }
@@ -240,7 +189,7 @@ export default function App() {
           setApiResponse(data);
           setActiveTab(UiNavigationRoute.DASHBOARD);
         })
-        .catch((err) => console.error(err))
+        .catch((err) => console.warn(err))
         .finally(() => setLoading(false));
     }, 100);
   };
@@ -324,10 +273,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col antialiased">
-      {!user ? (
-        <LoginView />
-      ) : (
-        <>
           {/* 5. GORGEOUS STICKY HEADER */}
           <header className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 md:px-8 py-3.5 flex justify-between items-center">
             <div className="flex items-center gap-2">
@@ -392,13 +337,6 @@ export default function App() {
                 >
                   <HeartHandshake className="h-4 w-4" />
                   <span>Donate</span>
-                </button>
-                <button
-                  onClick={() => signOut(auth)}
-                  className="ml-2 p-2 text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-red-200 dark:hover:border-red-800/50 hover:bg-red-50 dark:hover:bg-red-900/30"
-                  title="Sign Out"
-                >
-                  <LogOut className="h-4 w-4" />
                 </button>
               </nav>
 
@@ -482,7 +420,6 @@ export default function App() {
                 onSubmitTelemetry={handleTransmitTelemetry}
                 loading={loading}
               />
-              {user?.isAnonymous && <AccountUpgrade user={user} />}
             </div>
           </section>
         )}
@@ -519,8 +456,7 @@ export default function App() {
 
       {/* 8. FLOATING CLINICAL CHAT */}
       <GeminiChat />
-        </>
-      )}
     </div>
   );
 }
+

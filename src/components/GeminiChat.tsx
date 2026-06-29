@@ -49,7 +49,7 @@ export default function GeminiChat() {
       const data = await response.json();
       setMessages(prev => [...prev, { role: 'model', text: data.text }]);
     } catch (error) {
-      console.error(error);
+      console.warn(error);
       setMessages(prev => [...prev, { role: 'model', text: 'I am sorry, I am currently unable to process your request. Please check your connection or try again later.' }]);
     } finally {
       setLoading(false);

@@ -4,11 +4,6 @@ import {
   Settings, CheckCircle, AlertTriangle, Flame, Layers, Thermometer, MapPin, 
   Edit3, HelpCircle, Save, X, Phone, Heart
 } from 'lucide-react';
-import { db } from '../lib/firebase';
-import { 
-  collection, getDocs, doc, setDoc, deleteDoc, 
-  query, limit, orderBy, onSnapshot 
-} from 'firebase/firestore';
 
 interface PatientProfile {
   id: string;
@@ -115,72 +110,6 @@ export default function AdminView() {
   useEffect(() => {
     // First, pre-seed with highly structured default clinical data to ensure beautiful presentation instantly
     seedMockData();
-
-    // Set up active real-time listeners for Firestore database persistence
-    setLoading(true);
-    try {
-      const qPatients = query(collection(db, 'users'), limit(50));
-      const unsubPatients = onSnapshot(qPatients, (snapshot) => {
-        if (!snapshot.empty) {
-          const list = snapshot.docs.map(doc => ({
-            id: doc.id,
-            name: doc.data().displayName || doc.data().name || 'Anonymous Warrior',
-            email: doc.data().email || '',
-            hemoglobinType: doc.data().hemoglobinType || 'HbSS',
-            baselineHb: doc.data().baselineHb || 8.5,
-            baselineRetics: doc.data().baselineRetics || 10,
-            gender: doc.data().gender || 'female',
-            hasSplenomegaly: !!doc.data().hasSplenomegaly,
-            createdAt: doc.data().createdAt || new Date().toISOString()
-          })) as PatientProfile[];
-          setPatients(list);
-        }
-      }, err => console.warn("Firestore user sync limited:", err));
-
-      const qTelemetry = query(collection(db, 'telemetry_logs'), orderBy('timestamp', 'desc'), limit(50));
-      const unsubTelemetry = onSnapshot(qTelemetry, (snapshot) => {
-        if (!snapshot.empty) {
-          const list = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })) as TelemetryAudit[];
-          setTelemetryLogs(list);
-        }
-      }, err => console.warn("Firestore telemetry audit sync limited:", err));
-
-      const qCenters = query(collection(db, 'care_facilities'), limit(50));
-      const unsubCenters = onSnapshot(qCenters, (snapshot) => {
-        if (!snapshot.empty) {
-          const list = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })) as ScdCenter[];
-          setCenters(list);
-        }
-      }, err => console.warn("Firestore locator facilities sync limited:", err));
-
-      const qAnnouncements = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'), limit(10));
-      const unsubAnnouncements = onSnapshot(qAnnouncements, (snapshot) => {
-        if (!snapshot.empty) {
-          const list = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })) as Announcement[];
-          setAnnouncements(list);
-        }
-      }, err => console.warn("Firestore announcements sync limited:", err));
-
-      setLoading(false);
-      return () => {
-        unsubPatients();
-        unsubTelemetry();
-        unsubCenters();
-        unsubAnnouncements();
-      };
-    } catch (e) {
-      console.warn("Firestore synchronization error, maintaining local clinical cache:", e);
-      setLoading(false);
-    }
   }, []);
 
   const showStatus = (text: string, type: 'success' | 'error' = 'success') => {
@@ -211,25 +140,14 @@ export default function AdminView() {
     // Optimistic UI state update
     setCenters(prev => [facility, ...prev]);
 
-    try {
-      await setDoc(doc(db, 'care_facilities', id), facility);
-      showStatus('Facility added successfully to Firestore database!');
-      setNewCenter({ name: '', type: 'Day Clinic', address: '', distance: '', phone: '', triageGoal: '', specialty: '' });
-    } catch (err: any) {
-      console.error(err);
-      showStatus('Added locally (Firestore offline/permission limit).');
-    }
+    showStatus('Facility added successfully to local state!');
+    setNewCenter({ name: '', type: 'Day Clinic', address: '', distance: '', phone: '', triageGoal: '', specialty: '' });
   };
 
   // Delete clinical care center
   const handleDeleteCenter = async (id: string) => {
     setCenters(prev => prev.filter(c => c.id !== id));
-    try {
-      await deleteDoc(doc(db, 'care_facilities', id));
-      showStatus('Facility deleted successfully!');
-    } catch (err) {
-      showStatus('Removed locally.');
-    }
+    showStatus('Removed locally.');
   };
 
   // Add system-wide medical/weather announcement
@@ -251,25 +169,14 @@ export default function AdminView() {
     };
 
     setAnnouncements(prev => [ann, ...prev]);
-
-    try {
-      await setDoc(doc(db, 'announcements', id), ann);
-      showStatus('System Announcement published to all connected terminals!');
-      setNewAnnouncement({ title: '', content: '', type: 'warning', active: true });
-    } catch (err) {
-      showStatus('Published locally.');
-    }
+    showStatus('System Announcement published locally!');
+    setNewAnnouncement({ title: '', content: '', type: 'warning', active: true });
   };
 
   // Delete announcement
   const handleDeleteAnnouncement = async (id: string) => {
     setAnnouncements(prev => prev.filter(a => a.id !== id));
-    try {
-      await deleteDoc(doc(db, 'announcements', id));
-      showStatus('Announcement removed!');
-    } catch (err) {
-      showStatus('Removed locally.');
-    }
+    showStatus('Removed locally.');
   };
 
   // Register new manual clinical profile
@@ -294,14 +201,8 @@ export default function AdminView() {
     };
 
     setPatients(prev => [profile, ...prev]);
-
-    try {
-      await setDoc(doc(db, 'users', id), profile);
-      showStatus('SCD Patient Clinical Profile logged successfully!');
-      setNewPatient({ name: '', email: '', hemoglobinType: 'HbSS', baselineHb: 8.5, baselineRetics: 10, gender: 'female', hasSplenomegaly: false });
-    } catch (err) {
-      showStatus('Saved locally.');
-    }
+    showStatus('SCD Patient Clinical Profile logged locally!');
+    setNewPatient({ name: '', email: '', hemoglobinType: 'HbSS', baselineHb: 8.5, baselineRetics: 10, gender: 'female', hasSplenomegaly: false });
   };
 
   // Calculate clinical telemetry metrics
