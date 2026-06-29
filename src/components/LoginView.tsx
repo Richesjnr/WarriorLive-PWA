@@ -21,7 +21,7 @@ export default function LoginView() {
     } catch (err: any) {
       console.error("Anonymous auth error:", err);
       let friendlyError = err.message || 'An error occurred during guest login.';
-      if (err.code === 'auth/operation-not-allowed') {
+      if (err.code === 'auth/operation-not-allowed' || err.code === 'auth/admin-restricted-operation') {
         friendlyError = 'Anonymous sign-in is not enabled in Firebase Console.';
       }
       setError(friendlyError);
@@ -74,6 +74,8 @@ export default function LoginView() {
         friendlyError = 'This email address is already registered.';
       } else if (err.code === 'auth/weak-password') {
         friendlyError = 'Password must be at least 6 characters.';
+      } else if (err.code === 'auth/operation-not-allowed' || err.code === 'auth/admin-restricted-operation') {
+        friendlyError = 'This sign-in method is not enabled in Firebase Console.';
       }
       setError(friendlyError);
     } finally {
