@@ -209,7 +209,7 @@ Return the result as a raw JSON matching the following schema exactly (DO NOT in
 }`;
 
         const aiResponse = await generateContentWithRetry(ai, {
-          model: 'gemini-3.5-flash',
+          model: 'gemini-2.5-flash',
           contents: prompt,
           config: {
             responseMimeType: 'application/json',
@@ -275,7 +275,7 @@ Return the result as a raw JSON matching the following schema exactly (DO NOT in
 // Chat Endpoint
 app.post('/api/chat', async (req, res) => {
   try {
-    const { history, message, modelName = 'gemini-3.5-flash' } = req.body;
+    const { history, message, modelName = 'gemini-2.5-flash' } = req.body;
     
     const ai = getGeminiClient();
     if (!ai) {
