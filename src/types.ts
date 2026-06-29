@@ -10,6 +10,8 @@ export interface UserProfile {
   baselineRetics: number; // baseline reticulocyte %
   gender: 'male' | 'female' | 'other';
   hasSplenomegaly: boolean;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
 }
 
 export interface ClinicalTelemetry {
@@ -44,7 +46,8 @@ export enum UiNavigationRoute {
   LOCATOR = '/locator',
   KNOWLEDGE = '/knowledge',
   COMMUNITY = '/community',
-  ADMIN = '/admin'
+  ADMIN = '/admin',
+  DOCTOR = '/doctor'
 }
 
 export interface VitalsInsightCard {

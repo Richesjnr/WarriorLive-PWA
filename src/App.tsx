@@ -23,6 +23,7 @@ import CalendarView from './components/CalendarView';
 import KnowledgeHub from './components/KnowledgeHub';
 import CommunityView from './components/CommunityView';
 import AdminView from './components/AdminView';
+import DoctorView from './components/DoctorView';
 import { ThemeToggle } from './components/ThemeToggle';
 import GeminiChat from './components/GeminiChat';
 
@@ -42,7 +43,8 @@ import {
   Users,
   HeartHandshake,
   LogOut,
-  Settings
+  Settings,
+  Stethoscope
 } from 'lucide-react';
 
 export default function App() {
@@ -248,6 +250,8 @@ export default function App() {
         return <KnowledgeHub />;
       case UiNavigationRoute.COMMUNITY:
         return <CommunityView />;
+      case UiNavigationRoute.DOCTOR:
+        return <DoctorView />;
       case UiNavigationRoute.ADMIN:
         return isAdmin ? <AdminView /> : <DashboardView apiResponse={apiResponse} profile={profile} telemetry={telemetry} onSubmitTelemetry={handleTransmitTelemetry} loading={loading} />;
       default:
@@ -308,6 +312,7 @@ export default function App() {
                   { route: UiNavigationRoute.CALENDAR, label: 'Calendar', icon: Calendar },
                   { route: UiNavigationRoute.KNOWLEDGE, label: 'Knowledge Hub', icon: BookOpen },
                   { route: UiNavigationRoute.COMMUNITY, label: 'Community', icon: Users },
+                  { route: UiNavigationRoute.DOCTOR, label: 'Provider Panel', icon: Stethoscope },
                   ...(isAdmin ? [{ route: UiNavigationRoute.ADMIN, label: 'Admin Panel', icon: Settings }] : [])
                 ].map((tab) => {
                   const TabIcon = tab.icon;
@@ -365,6 +370,7 @@ export default function App() {
               { route: UiNavigationRoute.CALENDAR, label: 'Calendar', icon: Calendar },
               { route: UiNavigationRoute.KNOWLEDGE, label: 'Knowledge Hub', icon: BookOpen },
               { route: UiNavigationRoute.COMMUNITY, label: 'Community', icon: Users },
+              { route: UiNavigationRoute.DOCTOR, label: 'Provider Panel', icon: Stethoscope },
               ...(isAdmin ? [{ route: UiNavigationRoute.ADMIN, label: 'Admin Panel', icon: Settings }] : [])
             ].map((tab) => {
               const TabIcon = tab.icon;
@@ -409,7 +415,7 @@ export default function App() {
       {/* 6. RESPONSIVE TWO-COLUMN BENTO GRID */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Form Panel: Telemetry Controls */}
-        {activeTab !== UiNavigationRoute.ADMIN && (
+        {activeTab !== UiNavigationRoute.ADMIN && activeTab !== UiNavigationRoute.DOCTOR && (
           <section className="lg:col-span-4 space-y-6">
             <div className="sticky top-20">
               <ProfileForm
@@ -425,7 +431,7 @@ export default function App() {
         )}
 
         {/* Right Content Panel: Dynamic Active Layout View */}
-        <section className={`${activeTab === UiNavigationRoute.ADMIN ? 'lg:col-span-12 bg-transparent border-0 shadow-none !p-0' : 'lg:col-span-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 md:p-8 shadow-xs'} relative overflow-hidden flex flex-col min-h-[500px]`}>
+        <section className={`${(activeTab === UiNavigationRoute.ADMIN || activeTab === UiNavigationRoute.DOCTOR) ? 'lg:col-span-12 bg-transparent border-0 shadow-none !p-0' : 'lg:col-span-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 md:p-8 shadow-xs'} relative overflow-hidden flex flex-col min-h-[500px]`}>
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab + (apiResponse.globalEmergencyActive ? '-emergency' : '')}

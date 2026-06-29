@@ -108,6 +108,29 @@ export default function ProfileForm({
               />
             </div>
           </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Emergency Contact Name</label>
+              <input
+                type="text"
+                value={profile.emergencyContactName || ''}
+                onChange={(e) => onProfileChange({ emergencyContactName: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden font-medium text-slate-800 dark:text-slate-100"
+                placeholder="Name"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Emergency Phone</label>
+              <input
+                type="tel"
+                value={profile.emergencyContactPhone || ''}
+                onChange={(e) => onProfileChange({ emergencyContactPhone: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden font-mono font-medium text-slate-800 dark:text-slate-100"
+                placeholder="Phone"
+              />
+            </div>
+          </div>
         </div>
       </div>
 

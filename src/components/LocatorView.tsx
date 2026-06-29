@@ -3,9 +3,48 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LocationService } from '../types';
 import { MapPin, Search, Compass, ShieldCheck, HeartPulse, ExternalLink } from 'lucide-react';
+import { APIProvider, Map, AdvancedMarker, Pin, useMapsLibrary, useMap } from '@vis.gl/react-google-maps';
+
+const API_KEY =
+  process.env.GOOGLE_MAPS_PLATFORM_KEY ||
+  (import.meta as any).env?.VITE_GOOGLE_MAPS_PLATFORM_KEY ||
+  (globalThis as any).GOOGLE_MAPS_PLATFORM_KEY ||
+  '';
+const hasValidKey = Boolean(API_KEY) && API_KEY !== 'YOUR_API_KEY';
+
+function PlaceSearch({ query, location }: { query: string, location: google.maps.LatLngLiteral | null }) {
+  const placesLib = useMapsLibrary('places');
+  const map = useMap();
+  const [places, setPlaces] = useState<google.maps.places.Place[]>([]);
+
+  useEffect(() => {
+    if (!placesLib || !query) return;
+    placesLib.Place.searchByText({
+      textQuery: query,
+      fields: ['displayName', 'location', 'formattedAddress'],
+      locationBias: location || map?.getCenter(),
+      maxResultCount: 8,
+    }).then(({ places }) => {
+      setPlaces(places);
+      if (places.length > 0 && map && places[0].location) {
+          map.panTo(places[0].location);
+      }
+    });
+  }, [placesLib, query, map, location]);
+
+  return (
+    <>
+      {places.map(p => (
+        <AdvancedMarker key={p.id} position={p.location as google.maps.LatLng} title={p.displayName || ''}>
+            <Pin background="#ef4444" glyphColor="#fff" borderColor="#b91c1c" />
+        </AdvancedMarker>
+      ))}
+    </>
+  );
+}
 
 interface LocatorViewProps {
   locationData: LocationService;
@@ -53,13 +92,51 @@ const comprehensiveCenters: ScdCenter[] = [
 
 export default function LocatorView({ locationData }: LocatorViewProps) {
   const [searchQuery, setSearchQuery] = useState(locationData.geoSearchQuery || 'Specialized Sickle Cell clinics near me');
+  const [activeQuery, setActiveQuery] = useState(locationData.geoSearchQuery || 'Specialized Sickle Cell clinics near me');
   const [showStatus, setShowStatus] = useState<string>('');
+  const [userLocation, setUserLocation] = useState<google.maps.LatLngLiteral | null>(null);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.warn("Geolocation error", error);
+        }
+      );
+    }
+  }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setShowStatus(`Searching database for: "${searchQuery}"`);
+    setActiveQuery(searchQuery);
     setTimeout(() => setShowStatus(''), 3000);
   };
+
+  if (!hasValidKey) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
+        <div className="text-center max-w-md">
+          <Compass className="h-12 w-12 text-indigo-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Google Maps API Key Required</h2>
+          <p className="text-slate-600 dark:text-slate-400 text-sm mb-4">To enable real-time tracking and clinic discovery, please add your Google Maps Platform key.</p>
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-xl text-left text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+             <ol className="list-decimal pl-5 space-y-2">
+                <li>Open Settings (⚙️ top-right)</li>
+                <li>Go to Secrets</li>
+                <li>Add <code>GOOGLE_MAPS_PLATFORM_KEY</code></li>
+             </ol>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6" id="locator_view_section">
@@ -116,44 +193,35 @@ export default function LocatorView({ locationData }: LocatorViewProps) {
         <p className="text-xs text-slate-500 font-mono animate-pulse">{showStatus}</p>
       )}
 
-      {/* Beautiful Interactive Map Graphic Placeholder */}
-      <div className="relative h-64 bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col justify-between p-4">
-        {/* Mock Map Background Grid and Markers */}
-        <div className="absolute inset-0 opacity-20 dark:opacity-10 pointer-events-none" style={{
-          backgroundImage: 'radial-gradient(#1e1b4b 1px, transparent 0)',
-          backgroundSize: '24px 24px'
-        }} />
-
-        {/* Animated GPS Dot */}
-        <div className="absolute top-[40%] left-[30%] -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-          <span className="absolute inline-flex h-8 w-8 rounded-full bg-indigo-600/10 animate-ping" />
-          <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-600" />
-        </div>
-
-        {/* Mock Markers */}
-        <div className="absolute top-[30%] left-[65%] -translate-x-1/2 -translate-y-1/2 flex items-center gap-1">
-          <MapPin className="h-5 w-5 text-red-600 animate-bounce" style={{ animationDuration: '3s' }} />
-          <span className="bg-white px-1.5 py-0.5 rounded-sm border border-red-200 text-[8px] font-mono font-bold text-red-800 uppercase shadow-xs">Metropolitan Day Clinic</span>
-        </div>
-
-        <div className="absolute top-[65%] left-[50%] -translate-x-1/2 -translate-y-1/2 flex items-center gap-1">
-          <MapPin className="h-5 w-5 text-emerald-600 animate-bounce" style={{ animationDuration: '4s' }} />
-          <span className="bg-white px-1.5 py-0.5 rounded-sm border border-emerald-200 text-[8px] font-mono font-bold text-emerald-800 uppercase shadow-xs">SCD Care Center</span>
-        </div>
+      {/* Beautiful Interactive Map Graphic */}
+      <div className="relative h-[400px] bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col justify-between shadow-inner">
+         <APIProvider apiKey={API_KEY} version="weekly">
+            <Map
+              defaultCenter={userLocation || { lat: 38.9072, lng: -77.0369 }}
+              defaultZoom={userLocation ? 12 : 10}
+              mapId="SCD_CLINIC_LOCATOR"
+              internalUsageAttributionIds={['gmp_mcp_codeassist_v1_aistudio']}
+              style={{ width: '100%', height: '100%' }}
+              gestureHandling="greedy"
+              disableDefaultUI={false}
+            >
+              {userLocation && (
+                  <AdvancedMarker position={userLocation} title="Your Location">
+                     <div className="bg-indigo-600 text-white p-1.5 rounded-full border-2 border-white shadow-lg animate-pulse">
+                         <MapPin className="h-4 w-4" />
+                     </div>
+                  </AdvancedMarker>
+              )}
+              <PlaceSearch query={activeQuery} location={userLocation} />
+            </Map>
+         </APIProvider>
 
         {/* Floating Controls */}
-        <div className="z-10 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xs border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg shadow-xs text-[10px] font-mono text-slate-600 dark:text-slate-300 self-start">
-          GPS Active: Washington DC Region (38.9072° N, 77.0369° W)
-        </div>
-
-        <div className="z-10 bg-slate-900 text-white border border-slate-800 px-4 py-2.5 rounded-xl shadow-md flex items-center justify-between w-full mt-auto">
+        <div className="absolute bottom-4 left-4 z-10 bg-slate-900/90 text-white border border-slate-800 px-4 py-2.5 rounded-xl shadow-md flex items-center justify-between gap-4">
           <div>
             <h4 className="font-sans font-semibold text-xs leading-none">Map View Interface Active</h4>
-            <p className="text-[10px] text-slate-400 mt-1">3 specialized SCD centers found matching telemetry context.</p>
+            <p className="text-[10px] text-slate-400 mt-1">Live places search active.</p>
           </div>
-          <button className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold rounded-md border border-slate-700 transition-colors flex items-center gap-1 cursor-pointer">
-            Open in Maps <ExternalLink className="h-3 w-3" />
-          </button>
         </div>
       </div>
 

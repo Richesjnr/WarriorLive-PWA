@@ -40,7 +40,7 @@ export default function GeminiChat() {
         body: JSON.stringify({ 
           history: messages,
           message: userMsg,
-          modelName: 'gemini-1.5-flash'
+          modelName: 'gemini-2.5-flash'
         }),
       });
 

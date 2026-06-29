@@ -186,6 +186,23 @@ export default function EmergencyView({ profile, telemetry, apiResponse, onClear
           <HeartPulse className="h-5 w-5 text-red-600 dark:text-red-500" />
           Immediate Action Checklist
         </h3>
+        
+        {profile.emergencyContactName && profile.emergencyContactPhone && (
+          <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-xl p-4 flex items-center justify-between mb-4">
+             <div>
+               <h4 className="font-bold text-sm text-indigo-900 dark:text-indigo-300">Emergency Contact: {profile.emergencyContactName}</h4>
+               <p className="text-xs text-indigo-700/70 dark:text-indigo-400/70">{profile.emergencyContactPhone}</p>
+             </div>
+             <a
+               href={`tel:${profile.emergencyContactPhone}`}
+               className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors shadow-sm"
+             >
+               <Phone className="h-4 w-4" />
+               Call SOS Contact
+             </a>
+          </div>
+        )}
+
         <ul className="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs text-slate-600 dark:text-slate-400 list-none pl-0">
           <li className="flex gap-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
             <Phone className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
