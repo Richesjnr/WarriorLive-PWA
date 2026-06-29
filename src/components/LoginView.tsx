@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signInAnonymously } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
-import { Heart, Loader2, ShieldCheck, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Heart, Loader2, ShieldCheck, AlertCircle, CheckCircle2, User } from 'lucide-react';
 
 export default function LoginView() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -12,6 +12,22 @@ export default function LoginView() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+
+  const handleGuestLogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      await signInAnonymously(auth);
+    } catch (err: any) {
+      console.error("Anonymous auth error:", err);
+      let friendlyError = err.message || 'An error occurred during guest login.';
+      if (err.code === 'auth/operation-not-allowed') {
+        friendlyError = 'Anonymous sign-in is not enabled in Firebase Console.';
+      }
+      setError(friendlyError);
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,6 +173,15 @@ export default function LoginView() {
         </form>
 
         <div className="mt-6 flex flex-col items-center gap-4 border-t border-slate-100 dark:border-slate-800 pt-6">
+          <button
+            onClick={handleGuestLogin}
+            disabled={loading}
+            className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl px-4 py-3 text-sm font-bold shadow-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-70"
+          >
+            <User className="h-4 w-4" />
+            <span>Continue as Guest</span>
+          </button>
+
           <button
             onClick={() => { setIsSignUp(!isSignUp); setError(''); setSuccessMsg(''); }}
             className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"

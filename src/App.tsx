@@ -26,6 +26,7 @@ import AdminView from './components/AdminView';
 import { ThemeToggle } from './components/ThemeToggle';
 import GeminiChat from './components/GeminiChat';
 import LoginView from './components/LoginView';
+import AccountUpgrade from './components/AccountUpgrade';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -481,6 +482,7 @@ export default function App() {
                 onSubmitTelemetry={handleTransmitTelemetry}
                 loading={loading}
               />
+              {user?.isAnonymous && <AccountUpgrade user={user} />}
             </div>
           </section>
         )}
