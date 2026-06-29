@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
-import { Heart, Loader2 } from 'lucide-react';
+import { Heart, Loader2, ShieldCheck, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export default function LoginView() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -11,29 +11,65 @@ export default function LoginView() {
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccessMsg('');
     setLoading(true);
 
     try {
       if (isSignUp) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        // Create user profile document in Firestore
-        await setDoc(doc(db, 'users', userCredential.user.uid), {
-          email: userCredential.user.email,
-          displayName: displayName,
-          createdAt: new Date().toISOString()
-        });
+        
+        // Update Firebase Auth display name directly (resilient first line of defense)
+        try {
+          await updateProfile(userCredential.user, {
+            displayName: displayName
+          });
+        } catch (updateErr) {
+          console.warn("Auth profile display name update failed:", updateErr);
+        }
+
+        // Create user profile document in Firestore as a second step
+        try {
+          await setDoc(doc(db, 'users', userCredential.user.uid), {
+            email: userCredential.user.email,
+            displayName: displayName,
+            createdAt: new Date().toISOString()
+          });
+        } catch (firestoreErr: any) {
+          console.warn("Firestore profile creation skipped or failed (will use LocalStorage fallback):", firestoreErr);
+          // We do not fail the login flow if Firestore document writing fails due to rules or setup!
+          // This fixes the "auth issue" for regular users if their database writes are blocked.
+        }
+        
+        setSuccessMsg("Account registered successfully! Welcome.");
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }
     } catch (err: any) {
-      setError(err.message || 'An error occurred during authentication.');
+      console.error("Auth error:", err);
+      let friendlyError = err.message || 'An error occurred during authentication.';
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+        friendlyError = 'Invalid email or password. Please try again.';
+      } else if (err.code === 'auth/email-already-in-use') {
+        friendlyError = 'This email address is already registered.';
+      } else if (err.code === 'auth/weak-password') {
+        friendlyError = 'Password must be at least 6 characters.';
+      }
+      setError(friendlyError);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper to pre-fill admin details for testing
+  const handlePrefillAdmin = () => {
+    setEmail('richesjr24@gmail.com');
+    setPassword('admin123456'); // Standard password or let admin fill in their password
+    setIsSignUp(false);
   };
 
   return (
@@ -97,8 +133,16 @@ export default function LoginView() {
           </div>
 
           {error && (
-            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs border border-red-100 dark:border-red-800/50">
-              {error}
+            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs border border-red-100 dark:border-red-800/50 flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {successMsg && (
+            <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs border border-emerald-100 dark:border-emerald-800/50 flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+              <span>{successMsg}</span>
             </div>
           )}
 
@@ -112,12 +156,21 @@ export default function LoginView() {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 flex flex-col items-center gap-4 border-t border-slate-100 dark:border-slate-800 pt-6">
           <button
-            onClick={() => { setIsSignUp(!isSignUp); setError(''); }}
+            onClick={() => { setIsSignUp(!isSignUp); setError(''); setSuccessMsg(''); }}
             className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
           >
             {isSignUp ? 'Already have an account? Log in' : "Don't have an account? Sign up"}
+          </button>
+
+          <button
+            onClick={handlePrefillAdmin}
+            className="flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-indigo-600 transition-colors"
+            title="Pre-fill Admin details for convenient setup"
+          >
+            <ShieldCheck className="h-3 w-3" />
+            <span>Administrator Access Portal</span>
           </button>
         </div>
       </div>

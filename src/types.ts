@@ -43,7 +43,8 @@ export enum UiNavigationRoute {
   CALENDAR = '/calendar',
   LOCATOR = '/locator',
   KNOWLEDGE = '/knowledge',
-  COMMUNITY = '/community'
+  COMMUNITY = '/community',
+  ADMIN = '/admin'
 }
 
 export interface VitalsInsightCard {

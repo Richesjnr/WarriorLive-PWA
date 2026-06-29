@@ -22,12 +22,13 @@ import LocatorView from './components/LocatorView';
 import CalendarView from './components/CalendarView';
 import KnowledgeHub from './components/KnowledgeHub';
 import CommunityView from './components/CommunityView';
+import AdminView from './components/AdminView';
 import { ThemeToggle } from './components/ThemeToggle';
 import GeminiChat from './components/GeminiChat';
 import LoginView from './components/LoginView';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 // Icons
 import {
@@ -44,12 +45,16 @@ import {
   ShieldCheck,
   Users,
   HeartHandshake,
-  LogOut
+  LogOut,
+  Settings
 } from 'lucide-react';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+
+  // Admin Detection (richesjr24@gmail.com / J0YoPLgbwYUMMZTCRp14qEiXJvf1)
+  const isAdmin = !!user && (user.email?.toLowerCase() === 'richesjr24@gmail.com' || user.uid === 'J0YoPLgbwYUMMZTCRp14qEiXJvf1');
 
   // 1. STATE INITIALIZATION (LocalStorage Hydrated for Offline-First)
   const [profile, setProfile] = useState<UserProfile>(() => {
@@ -122,6 +127,10 @@ export default function App() {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
+        const isUserAdmin = currentUser.email?.toLowerCase() === 'richesjr24@gmail.com' || currentUser.uid === 'J0YoPLgbwYUMMZTCRp14qEiXJvf1';
+        if (isUserAdmin) {
+          setActiveTab(UiNavigationRoute.ADMIN);
+        }
         try {
           const docRef = doc(db, 'users', currentUser.uid);
           const docSnap = await getDoc(docRef);
@@ -165,6 +174,26 @@ export default function App() {
       const data: TelemetryResponse = await response.json();
 
       setApiResponse(data);
+
+      // Also resiliently log telemetry stream to Firestore for clinical audits (if authenticated)
+      if (user) {
+        try {
+          const logId = 'log-' + Date.now();
+          await setDoc(doc(db, 'telemetry_logs', logId), {
+            userName: profile.name || user.displayName || 'Warrior',
+            email: user.email || '',
+            painLevel: Number(telemetry.painLevel),
+            temperatureCelsius: Number(telemetry.temperatureCelsius),
+            bloodPressure: telemetry.bloodPressure,
+            heartRate: Number(telemetry.heartRate || 72),
+            oxygenSaturation: Number(telemetry.oxygenSaturation || 98),
+            emergencyButtonPressed: !!telemetry.emergencyButtonPressed,
+            timestamp: new Date().toISOString()
+          });
+        } catch (dbErr) {
+          console.warn("Firestore telemetry log save skipped (will run in LocalStorage mode):", dbErr);
+        }
+      }
 
       // Deterministic navigation override if emergency is triggered
       if (data.globalEmergencyActive) {
@@ -269,6 +298,8 @@ export default function App() {
         return <KnowledgeHub />;
       case UiNavigationRoute.COMMUNITY:
         return <CommunityView />;
+      case UiNavigationRoute.ADMIN:
+        return isAdmin ? <AdminView /> : <DashboardView apiResponse={apiResponse} profile={profile} telemetry={telemetry} onSubmitTelemetry={handleTransmitTelemetry} loading={loading} />;
       default:
         return (
           <DashboardView
@@ -330,7 +361,8 @@ export default function App() {
                   { route: UiNavigationRoute.LOCATOR, label: 'Care Locator', icon: Compass },
                   { route: UiNavigationRoute.CALENDAR, label: 'Calendar', icon: Calendar },
                   { route: UiNavigationRoute.KNOWLEDGE, label: 'Knowledge Hub', icon: BookOpen },
-                  { route: UiNavigationRoute.COMMUNITY, label: 'Community', icon: Users }
+                  { route: UiNavigationRoute.COMMUNITY, label: 'Community', icon: Users },
+                  ...(isAdmin ? [{ route: UiNavigationRoute.ADMIN, label: 'Admin Panel', icon: Settings }] : [])
                 ].map((tab) => {
                   const TabIcon = tab.icon;
                   const isActive = activeTab === tab.route && !apiResponse.globalEmergencyActive;
@@ -393,7 +425,8 @@ export default function App() {
               { route: UiNavigationRoute.LOCATOR, label: 'Care Locator', icon: Compass },
               { route: UiNavigationRoute.CALENDAR, label: 'Calendar', icon: Calendar },
               { route: UiNavigationRoute.KNOWLEDGE, label: 'Knowledge Hub', icon: BookOpen },
-              { route: UiNavigationRoute.COMMUNITY, label: 'Community', icon: Users }
+              { route: UiNavigationRoute.COMMUNITY, label: 'Community', icon: Users },
+              ...(isAdmin ? [{ route: UiNavigationRoute.ADMIN, label: 'Admin Panel', icon: Settings }] : [])
             ].map((tab) => {
               const TabIcon = tab.icon;
               const isActive = activeTab === tab.route && !apiResponse.globalEmergencyActive;
@@ -437,21 +470,23 @@ export default function App() {
       {/* 6. RESPONSIVE TWO-COLUMN BENTO GRID */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Form Panel: Telemetry Controls */}
-        <section className="lg:col-span-4 space-y-6">
-          <div className="sticky top-20">
-            <ProfileForm
-              profile={profile}
-              telemetry={telemetry}
-              onProfileChange={(updated) => setProfile({ ...profile, ...updated })}
-              onTelemetryChange={(updated) => setTelemetry({ ...telemetry, ...updated })}
-              onSubmitTelemetry={handleTransmitTelemetry}
-              loading={loading}
-            />
-          </div>
-        </section>
+        {activeTab !== UiNavigationRoute.ADMIN && (
+          <section className="lg:col-span-4 space-y-6">
+            <div className="sticky top-20">
+              <ProfileForm
+                profile={profile}
+                telemetry={telemetry}
+                onProfileChange={(updated) => setProfile({ ...profile, ...updated })}
+                onTelemetryChange={(updated) => setTelemetry({ ...telemetry, ...updated })}
+                onSubmitTelemetry={handleTransmitTelemetry}
+                loading={loading}
+              />
+            </div>
+          </section>
+        )}
 
         {/* Right Content Panel: Dynamic Active Layout View */}
-        <section className="lg:col-span-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 md:p-8 shadow-xs relative overflow-hidden flex flex-col min-h-[500px]">
+        <section className={`${activeTab === UiNavigationRoute.ADMIN ? 'lg:col-span-12 bg-transparent border-0 shadow-none !p-0' : 'lg:col-span-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 md:p-8 shadow-xs'} relative overflow-hidden flex flex-col min-h-[500px]`}>
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab + (apiResponse.globalEmergencyActive ? '-emergency' : '')}
