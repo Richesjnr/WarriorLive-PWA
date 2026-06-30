@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { TelemetryResponse, UserProfile, ClinicalTelemetry } from '../types';
-import { ShieldCheck, AlertTriangle, ShieldAlert, Droplet, Thermometer, Activity, RefreshCw, BarChart2, BookOpen, Pill, CheckCircle2, Heart, Wind } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, ShieldAlert, Droplet, Thermometer, Activity, RefreshCw, BarChart2, BookOpen, Pill, CheckCircle2, Heart, Wind, Clock } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface DashboardViewProps {
@@ -40,6 +40,28 @@ export default function DashboardView({ apiResponse, profile, telemetry, onSubmi
   });
 
   const [weatherData, setWeatherData] = useState<{ temp: number; isExtreme: boolean } | null>(null);
+
+  // Reassessment Timer State
+  const [reassessmentTimeLeft, setReassessmentTimeLeft] = useState<number>(30 * 60); // 30 minutes in seconds
+
+  useEffect(() => {
+    const timerInterval = setInterval(() => {
+      setReassessmentTimeLeft(prev => {
+        if (prev <= 0) {
+          clearInterval(timerInterval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timerInterval);
+  }, []);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
 
   useEffect(() => {
     localStorage.setItem('warriorlive_hydration', hydrationGlasses.toString());
@@ -132,6 +154,22 @@ export default function DashboardView({ apiResponse, profile, telemetry, onSubmi
         >
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
         </button>
+      </div>
+
+      {/* Reassessment Timer */}
+      <div className="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800/50 rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-100 dark:bg-indigo-800/50 rounded-lg">
+            <Clock className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+          </div>
+          <div>
+            <h4 className="font-bold text-sm text-indigo-900 dark:text-indigo-300">Next Reassessment</h4>
+            <p className="text-xs text-indigo-700/80 dark:text-indigo-400/80">Time to log vitals again</p>
+          </div>
+        </div>
+        <div className="text-2xl font-bold font-mono text-indigo-700 dark:text-indigo-300">
+          {formatTime(reassessmentTimeLeft)}
+        </div>
       </div>
 
       {/* Weather Alert Banner */}
@@ -330,9 +368,9 @@ export default function DashboardView({ apiResponse, profile, telemetry, onSubmi
       </div>
 
       {/* Interactive Clinical Charts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 -mx-4 px-4 scrollbar-hide">
         {/* Pain Trend Chart */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-sm min-w-[85%] md:min-w-[45%] snap-center shrink-0 animate-in zoom-in duration-500">
           <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
             <h4 className="font-sans font-semibold text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
               <Activity className="h-4 w-4 text-red-500" />
@@ -357,7 +395,7 @@ export default function DashboardView({ apiResponse, profile, telemetry, onSubmi
         </div>
 
         {/* Temperature Trend Chart */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-sm min-w-[85%] md:min-w-[45%] snap-center shrink-0 animate-in zoom-in duration-500 delay-75">
           <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
             <h4 className="font-sans font-semibold text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
               <Thermometer className="h-4 w-4 text-amber-500" />
@@ -382,7 +420,7 @@ export default function DashboardView({ apiResponse, profile, telemetry, onSubmi
         </div>
 
         {/* Heart Rate Trend Chart */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-sm min-w-[85%] md:min-w-[45%] snap-center shrink-0 animate-in zoom-in duration-500 delay-150">
           <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
             <h4 className="font-sans font-semibold text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
               <Heart className="h-4 w-4 text-rose-500" />
@@ -407,7 +445,7 @@ export default function DashboardView({ apiResponse, profile, telemetry, onSubmi
         </div>
 
         {/* Oxygen Saturation Trend Chart */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-sm min-w-[85%] md:min-w-[45%] snap-center shrink-0 animate-in zoom-in duration-500 delay-200">
           <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
             <h4 className="font-sans font-semibold text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
               <Wind className="h-4 w-4 text-cyan-500" />

@@ -240,8 +240,12 @@ Return the result as a raw JSON matching the following schema exactly (DO NOT in
             });
           }
         }
-      } catch (geminiError) {
-        console.warn("Gemini API stream evaluation error:", geminiError);
+      } catch (geminiError: any) {
+        if (geminiError?.status === 429) {
+          console.warn("[WarriorLive] LLM evaluation skipped due to rate limits. Falling back to deterministic local clinical heuristics.");
+        } else {
+          console.warn("[WarriorLive] LLM evaluation failed. Falling back to deterministic local clinical heuristics.", geminiError?.message);
+        }
         // Fall through to local heuristics
       }
     }

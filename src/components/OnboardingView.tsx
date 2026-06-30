@@ -14,6 +14,7 @@ export default function OnboardingView({ onComplete }: OnboardingProps) {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [npiNumber, setNpiNumber] = useState('');
+  const [institution, setInstitution] = useState('');
   const [licenseFile, setLicenseFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -121,6 +122,17 @@ export default function OnboardingView({ onComplete }: OnboardingProps) {
                     onChange={(e) => setNpiNumber(e.target.value)}
                     className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono dark:text-white"
                     placeholder="1234567890"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Institution</label>
+                  <input
+                    type="text"
+                    required
+                    value={institution}
+                    onChange={(e) => setInstitution(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white"
+                    placeholder="General Hospital"
                   />
                 </div>
               </div>
