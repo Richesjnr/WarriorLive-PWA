@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { initAuth, googleSignIn, logout as googleLogout } from './googleAuth';
 import {
   UserProfile,
   ClinicalTelemetry,
@@ -170,16 +171,37 @@ export default function App() {
     setAuthStatus(status);
     if (role === 'professional') {
       setActiveTab(UiNavigationRoute.DOCTOR);
+    } else if (role === 'admin') {
+      setActiveTab(UiNavigationRoute.ADMIN);
     } else {
       setActiveTab(UiNavigationRoute.DASHBOARD);
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await googleLogout();
+    } catch (e) {
+      console.error(e);
+    }
     setAuthRole(null);
     setAuthStatus(null);
     setActiveTab(UiNavigationRoute.DASHBOARD);
   };
+
+  useEffect(() => {
+    const unsubscribe = initAuth((user, token) => {
+      // Check if role is missing, we could fetch from DB, but for now just use patient if missing
+      setAuthStatus('authenticated');
+      if (!authRole) setAuthRole('patient');
+    }, () => {
+      if (authStatus !== 'guest') {
+        setAuthRole(null);
+        setAuthStatus(null);
+      }
+    });
+    return () => unsubscribe();
+  }, [authRole, authStatus]);
 
   // Run on initial load to calibrate with server
   useEffect(() => {
