@@ -1,5 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { User, Shield, UploadCloud, ChevronRight, Activity, FileText, CheckCircle } from 'lucide-react';
+import { User, Shield, UploadCloud, ChevronRight, Activity, FileText, CheckCircle, LogIn, UserPlus } from 'lucide-react';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebase';
 
 export type UserRole = 'patient' | 'professional' | 'admin';
 export type AuthStatus = 'authenticated' | 'guest' | 'pending_verification';
@@ -10,6 +12,7 @@ interface OnboardingProps {
 
 export default function OnboardingView({ onComplete }: OnboardingProps) {
   const [activeRole, setActiveRole] = useState<'patient' | 'professional'>('patient');
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -17,6 +20,8 @@ export default function OnboardingView({ onComplete }: OnboardingProps) {
   const [institution, setInstitution] = useState('');
   const [licenseFile, setLicenseFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -43,13 +48,27 @@ export default function OnboardingView({ onComplete }: OnboardingProps) {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (activeRole === 'patient') {
-      onComplete('patient', 'authenticated');
-    } else {
-      // Mocking professional verification status (could be pending or approved)
-      onComplete('professional', 'pending_verification');
+    setErrorMsg('');
+    setLoading(true);
+
+    try {
+      if (authMode === 'signup') {
+        await createUserWithEmailAndPassword(auth, email, password);
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+      }
+      
+      if (activeRole === 'patient') {
+        onComplete('patient', 'authenticated');
+      } else {
+        onComplete('professional', 'pending_verification');
+      }
+    } catch (error: any) {
+      setErrorMsg(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -61,7 +80,7 @@ export default function OnboardingView({ onComplete }: OnboardingProps) {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
         {/* Header */}
-        <div className="p-8 text-center bg-indigo-600">
+        <div className="p-8 text-center bg-indigo-600 relative">
           <div className="flex justify-center mb-4">
             <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
               <Activity className="h-8 w-8 text-white" />
@@ -71,9 +90,35 @@ export default function OnboardingView({ onComplete }: OnboardingProps) {
           <p className="text-indigo-100 text-sm">Clinical-Grade SCD Optimization Platform</p>
         </div>
 
-        <div className="p-8">
+        <div className="p-8 pt-6">
+          {/* Auth Mode Toggle */}
+          <div className="flex justify-center mb-6">
+             <div className="flex bg-slate-100 dark:bg-slate-900 rounded-full p-1 border border-slate-200 dark:border-slate-700">
+               <button
+                 className={`px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all ${
+                   authMode === 'login'
+                     ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                     : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                 }`}
+                 onClick={() => { setAuthMode('login'); setErrorMsg(''); }}
+               >
+                 <LogIn className="h-3 w-3" /> Log In
+               </button>
+               <button
+                 className={`px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all ${
+                   authMode === 'signup'
+                     ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                     : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                 }`}
+                 onClick={() => { setAuthMode('signup'); setErrorMsg(''); }}
+               >
+                 <UserPlus className="h-3 w-3" /> Create Account
+               </button>
+             </div>
+          </div>
+
           {/* Role Toggle */}
-          <div className="flex p-1 bg-slate-100 dark:bg-slate-900 rounded-xl mb-8">
+          <div className="flex p-1 bg-slate-100 dark:bg-slate-900 rounded-xl mb-6">
             <button
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                 activeRole === 'patient'
@@ -98,9 +143,15 @@ export default function OnboardingView({ onComplete }: OnboardingProps) {
             </button>
           </div>
 
+          {errorMsg && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 text-xs rounded-lg dark:bg-red-900/30 dark:border-red-800">
+              {errorMsg}
+            </div>
+          )}
+
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {activeRole === 'professional' && (
+            {activeRole === 'professional' && authMode === 'signup' && (
               <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Full Name</label>
@@ -165,7 +216,7 @@ export default function OnboardingView({ onComplete }: OnboardingProps) {
               />
             </div>
 
-            {activeRole === 'professional' && (
+            {activeRole === 'professional' && authMode === 'signup' && (
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Medical License Upload</label>
                 <div
@@ -204,17 +255,20 @@ export default function OnboardingView({ onComplete }: OnboardingProps) {
             <div className="pt-4 space-y-3 pb-8">
               <button
                 type="submit"
+                disabled={loading}
                 className={`w-full py-3 px-4 rounded-xl text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 ${
+                  loading ? 'opacity-70 cursor-not-allowed' : ''
+                } ${
                   activeRole === 'professional'
                     ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20'
                     : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/20'
                 }`}
               >
-                {activeRole === 'professional' ? 'Submit Registration' : 'Create Account'}
-                <ChevronRight className="h-4 w-4" />
+                {loading ? 'Processing...' : (authMode === 'login' ? 'Log In' : (activeRole === 'professional' ? 'Submit Registration' : 'Create Account'))}
+                {!loading && <ChevronRight className="h-4 w-4" />}
               </button>
 
-              {activeRole === 'patient' && (
+              {activeRole === 'patient' && authMode === 'signup' && (
                 <button
                   type="button"
                   onClick={handleGuestMode}
