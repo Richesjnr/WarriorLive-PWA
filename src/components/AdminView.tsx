@@ -50,6 +50,8 @@ interface Announcement {
   active: boolean;
 }
 
+import { exportToGoogleSheets } from '../googleSheetsExport';
+
 export default function AdminView() {
   const [activeSubTab, setActiveSubTab] = useState<'analytics' | 'patients' | 'telemetry' | 'locator' | 'announcements'>('analytics');
   
@@ -60,6 +62,7 @@ export default function AdminView() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState({ text: '', type: 'success' });
+  const [isExporting, setIsExporting] = useState(false);
 
   // Form states for adding items
   const [newCenter, setNewCenter] = useState<Partial<ScdCenter>>({
@@ -282,7 +285,28 @@ export default function AdminView() {
         {/* SUBTAB 1: SYSTEM ANALYTICS */}
         {activeSubTab === 'analytics' && (
           <div className="space-y-6">
-            <h3 className="font-sans font-bold text-lg text-slate-800 dark:text-slate-200">SCD Population Health Metrics</h3>
+            <div className="flex justify-between items-center flex-wrap gap-4">
+              <h3 className="font-sans font-bold text-lg text-slate-800 dark:text-slate-200">SCD Population Health Metrics</h3>
+              <button 
+                onClick={async () => {
+                  setIsExporting(true);
+                  try {
+                    const url = await exportToGoogleSheets(patients, telemetryLogs, centers, announcements);
+                    showStatus(`Successfully exported data to Google Sheets!`);
+                    window.open(url, '_blank');
+                  } catch (err: any) {
+                    showStatus(`Export failed: ${err.message}`, 'error');
+                  } finally {
+                    setIsExporting(false);
+                  }
+                }}
+                disabled={isExporting}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer transition-colors disabled:opacity-50"
+              >
+                <Save className="h-4 w-4" />
+                {isExporting ? 'Exporting...' : 'Export to Google Sheets'}
+              </button>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="p-5 bg-indigo-50/50 dark:bg-indigo-950/10 border border-indigo-100 dark:border-indigo-900/30 rounded-2xl">
