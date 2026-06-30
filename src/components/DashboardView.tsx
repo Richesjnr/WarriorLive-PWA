@@ -46,6 +46,7 @@ export default function DashboardView({ apiResponse, profile, telemetry, onSubmi
 
   // Carousel scroll state
   const [scrollProgress, setScrollProgress] = useState(0);
+  const carouselRef = React.useRef<HTMLDivElement>(null);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const target = e.currentTarget;
@@ -54,6 +55,22 @@ export default function DashboardView({ apiResponse, profile, telemetry, onSubmi
       setScrollProgress((target.scrollLeft / maxScroll) * 100);
     }
   };
+
+  useEffect(() => {
+    const carouselInterval = setInterval(() => {
+      if (carouselRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+        // Auto scroll right, or loop back to start if at the end
+        if (scrollLeft + clientWidth >= scrollWidth - 10) {
+          carouselRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          // Scroll by slightly less than full width to keep some context
+          carouselRef.current.scrollBy({ left: clientWidth * 0.85, behavior: 'smooth' });
+        }
+      }
+    }, 3000);
+    return () => clearInterval(carouselInterval);
+  }, []);
 
   useEffect(() => {
     const timerInterval = setInterval(() => {
@@ -379,14 +396,15 @@ export default function DashboardView({ apiResponse, profile, telemetry, onSubmi
       </div>
 
       {/* Interactive Clinical Charts */}
-      <div className="flex items-center justify-between mb-[-12px]">
-        <h3 className="font-sans font-bold text-sm text-slate-800 dark:text-slate-200">Clinical Trends</h3>
-        <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+      <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-100 dark:border-slate-800">
+        <h3 className="font-sans font-bold text-sm text-slate-800 dark:text-slate-200 uppercase tracking-wide">Clinical Trends</h3>
+        <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
           Swipe left <ChevronRight className="h-3 w-3" />
         </span>
       </div>
       <div 
-        className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 -mx-4 px-4 scrollbar-hide relative group"
+        ref={carouselRef}
+        className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-6 -mx-4 px-4 scrollbar-hide relative group transition-all duration-500 ease-in-out"
         onScroll={handleScroll}
       >
         {/* Pain Trend Chart */}
@@ -491,9 +509,9 @@ export default function DashboardView({ apiResponse, profile, telemetry, onSubmi
       </div>
       
       {/* Scroll Progress Indicator */}
-      <div className="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full mt-2 mb-6 overflow-hidden">
+      <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full mt-4 mb-8 overflow-hidden shadow-inner">
         <div 
-          className="h-full bg-indigo-500 rounded-full transition-all duration-150 ease-out" 
+          className="h-full bg-indigo-500 rounded-full transition-all duration-700 ease-in-out shadow-sm" 
           style={{ width: `${Math.max(15, scrollProgress)}%` }} 
         />
       </div>

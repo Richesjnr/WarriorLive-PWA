@@ -268,7 +268,7 @@ export default function OnboardingView({ onComplete }: OnboardingProps) {
                 {!loading && <ChevronRight className="h-4 w-4" />}
               </button>
 
-              {activeRole === 'patient' && authMode === 'signup' && (
+              {activeRole === 'patient' && (
                 <button
                   type="button"
                   onClick={handleGuestMode}
