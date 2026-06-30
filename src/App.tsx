@@ -24,6 +24,8 @@ import KnowledgeHub from './components/KnowledgeHub';
 import CommunityView from './components/CommunityView';
 import AdminView from './components/AdminView';
 import DoctorView from './components/DoctorView';
+import OnboardingView, { UserRole, AuthStatus } from './components/OnboardingView';
+import VerificationPendingView from './components/VerificationPendingView';
 import { ThemeToggle } from './components/ThemeToggle';
 import GeminiChat from './components/GeminiChat';
 
@@ -48,10 +50,13 @@ import {
 } from 'lucide-react';
 
 export default function App() {
+  const [authRole, setAuthRole] = useState<UserRole | null>(null);
+  const [authStatus, setAuthStatus] = useState<AuthStatus | null>(null);
+  
   const [authLoading, setAuthLoading] = useState(false);
 
   // Admin Detection
-  const isAdmin = true; // Assuming admin mode is toggled differently or just accessible
+  const isAdmin = authRole === 'admin';
 
   // 1. STATE INITIALIZATION (LocalStorage Hydrated for Offline-First)
   const [profile, setProfile] = useState<UserProfile>(() => {
@@ -158,6 +163,22 @@ export default function App() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOnboardingComplete = (role: UserRole, status: AuthStatus) => {
+    setAuthRole(role);
+    setAuthStatus(status);
+    if (role === 'professional') {
+      setActiveTab(UiNavigationRoute.DOCTOR);
+    } else {
+      setActiveTab(UiNavigationRoute.DASHBOARD);
+    }
+  };
+
+  const handleLogout = () => {
+    setAuthRole(null);
+    setAuthStatus(null);
+    setActiveTab(UiNavigationRoute.DASHBOARD);
   };
 
   // Run on initial load to calibrate with server
@@ -275,6 +296,14 @@ export default function App() {
     );
   }
 
+  if (!authRole) {
+    return <OnboardingView onComplete={handleOnboardingComplete} />;
+  }
+
+  if (authRole === 'professional' && authStatus === 'pending_verification') {
+    return <VerificationPendingView onLogout={handleLogout} />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col antialiased">
           {/* 5. GORGEOUS STICKY HEADER */}
@@ -306,15 +335,13 @@ export default function App() {
 
               {/* Desktop Navigation */}
               <nav className="hidden md:flex items-center gap-1">
-                {[
+                {((authRole === 'patient' || isAdmin) ? [
                   { route: UiNavigationRoute.DASHBOARD, label: 'Dashboard', icon: Activity },
                   { route: UiNavigationRoute.LOCATOR, label: 'Care Locator', icon: Compass },
                   { route: UiNavigationRoute.CALENDAR, label: 'Calendar', icon: Calendar },
                   { route: UiNavigationRoute.KNOWLEDGE, label: 'Knowledge Hub', icon: BookOpen },
-                  { route: UiNavigationRoute.COMMUNITY, label: 'Community', icon: Users },
-                  { route: UiNavigationRoute.DOCTOR, label: 'Provider Panel', icon: Stethoscope },
-                  ...(isAdmin ? [{ route: UiNavigationRoute.ADMIN, label: 'Admin Panel', icon: Settings }] : [])
-                ].map((tab) => {
+                  { route: UiNavigationRoute.COMMUNITY, label: 'Community', icon: Users }
+                ] : []).map((tab) => {
                   const TabIcon = tab.icon;
                   const isActive = activeTab === tab.route && !apiResponse.globalEmergencyActive;
                   return (
@@ -336,12 +363,69 @@ export default function App() {
                     </button>
                   );
                 })}
+                
+                {((authRole === 'professional' || isAdmin) ? [
+                  { route: UiNavigationRoute.DOCTOR, label: 'Provider Panel', icon: Stethoscope }
+                ] : []).map((tab) => {
+                  const TabIcon = tab.icon;
+                  const isActive = activeTab === tab.route && !apiResponse.globalEmergencyActive;
+                  return (
+                    <button
+                      key={tab.route}
+                      onClick={() => {
+                        if (apiResponse.globalEmergencyActive) return;
+                        setActiveTab(tab.route);
+                      }}
+                      disabled={apiResponse.globalEmergencyActive}
+                      className={`px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-100 dark:shadow-none'
+                          : 'text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/30 disabled:opacity-50'
+                      }`}
+                    >
+                      <TabIcon className="h-4 w-4" />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
+
+                {(isAdmin ? [
+                  { route: UiNavigationRoute.ADMIN, label: 'Admin Panel', icon: Settings }
+                ] : []).map((tab) => {
+                  const TabIcon = tab.icon;
+                  const isActive = activeTab === tab.route && !apiResponse.globalEmergencyActive;
+                  return (
+                    <button
+                      key={tab.route}
+                      onClick={() => {
+                        if (apiResponse.globalEmergencyActive) return;
+                        setActiveTab(tab.route);
+                      }}
+                      disabled={apiResponse.globalEmergencyActive}
+                      className={`px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-slate-800 text-white shadow-sm shadow-slate-100 dark:shadow-none'
+                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 disabled:opacity-50'
+                      }`}
+                    >
+                      <TabIcon className="h-4 w-4" />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
                 <button
                   onClick={() => alert('Thank you for considering a donation to support Sickle Cell warriors!')}
                   className="ml-2 px-3 py-2 bg-rose-50 hover:bg-rose-100 dark:bg-rose-900/30 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer border border-rose-200 dark:border-rose-800/50"
                 >
                   <HeartHandshake className="h-4 w-4" />
                   <span>Donate</span>
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="ml-1 px-3 py-2 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer border border-slate-200 dark:border-slate-700"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Sign Out</span>
                 </button>
               </nav>
 
@@ -364,15 +448,13 @@ export default function App() {
             exit={{ opacity: 0, y: -20 }}
             className="md:hidden border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-2 flex flex-col z-20 sticky top-[57px] shadow-sm"
           >
-            {[
+            {((authRole === 'patient' || isAdmin) ? [
               { route: UiNavigationRoute.DASHBOARD, label: 'Dashboard', icon: Activity },
               { route: UiNavigationRoute.LOCATOR, label: 'Care Locator', icon: Compass },
               { route: UiNavigationRoute.CALENDAR, label: 'Calendar', icon: Calendar },
               { route: UiNavigationRoute.KNOWLEDGE, label: 'Knowledge Hub', icon: BookOpen },
-              { route: UiNavigationRoute.COMMUNITY, label: 'Community', icon: Users },
-              { route: UiNavigationRoute.DOCTOR, label: 'Provider Panel', icon: Stethoscope },
-              ...(isAdmin ? [{ route: UiNavigationRoute.ADMIN, label: 'Admin Panel', icon: Settings }] : [])
-            ].map((tab) => {
+              { route: UiNavigationRoute.COMMUNITY, label: 'Community', icon: Users }
+            ] : []).map((tab) => {
               const TabIcon = tab.icon;
               const isActive = activeTab === tab.route && !apiResponse.globalEmergencyActive;
               return (
@@ -396,12 +478,71 @@ export default function App() {
               );
             })}
             
+            {((authRole === 'professional' || isAdmin) ? [
+              { route: UiNavigationRoute.DOCTOR, label: 'Provider Panel', icon: Stethoscope }
+            ] : []).map((tab) => {
+              const TabIcon = tab.icon;
+              const isActive = activeTab === tab.route && !apiResponse.globalEmergencyActive;
+              return (
+                <button
+                  key={tab.route}
+                  onClick={() => {
+                    if (apiResponse.globalEmergencyActive) return;
+                    setActiveTab(tab.route);
+                    setMobileMenuOpen(false);
+                  }}
+                  disabled={apiResponse.globalEmergencyActive}
+                  className={`px-4 py-2.5 rounded-lg text-xs font-bold flex items-center gap-2.5 transition-all ${
+                    isActive
+                      ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-100 dark:shadow-none'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/30 disabled:opacity-50'
+                  }`}
+                >
+                  <TabIcon className="h-4.5 w-4.5" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+            
+            {(isAdmin ? [
+              { route: UiNavigationRoute.ADMIN, label: 'Admin Panel', icon: Settings }
+            ] : []).map((tab) => {
+              const TabIcon = tab.icon;
+              const isActive = activeTab === tab.route && !apiResponse.globalEmergencyActive;
+              return (
+                <button
+                  key={tab.route}
+                  onClick={() => {
+                    if (apiResponse.globalEmergencyActive) return;
+                    setActiveTab(tab.route);
+                    setMobileMenuOpen(false);
+                  }}
+                  disabled={apiResponse.globalEmergencyActive}
+                  className={`px-4 py-2.5 rounded-lg text-xs font-bold flex items-center gap-2.5 transition-all ${
+                    isActive
+                      ? 'bg-slate-800 text-white shadow-sm shadow-slate-100 dark:shadow-none'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 disabled:opacity-50'
+                  }`}
+                >
+                  <TabIcon className="h-4.5 w-4.5" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+            
             <button
               onClick={() => alert('Thank you for considering a donation to support Sickle Cell warriors!')}
               className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-900/30 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 rounded-lg text-xs font-bold flex items-center gap-2.5 transition-all border border-rose-200 dark:border-rose-800/50 mt-2"
             >
               <HeartHandshake className="h-4.5 w-4.5" />
               <span>Donate</span>
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-bold flex items-center gap-2.5 transition-all border border-slate-200 dark:border-slate-700 mt-2"
+            >
+              <LogOut className="h-4.5 w-4.5" />
+              <span>Sign Out</span>
             </button>
             
             <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center">
