@@ -44,6 +44,17 @@ export default function DashboardView({ apiResponse, profile, telemetry, onSubmi
   // Reassessment Timer State
   const [reassessmentTimeLeft, setReassessmentTimeLeft] = useState<number>(30 * 60); // 30 minutes in seconds
 
+  // Carousel scroll state
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const maxScroll = target.scrollWidth - target.clientWidth;
+    if (maxScroll > 0) {
+      setScrollProgress((target.scrollLeft / maxScroll) * 100);
+    }
+  };
+
   useEffect(() => {
     const timerInterval = setInterval(() => {
       setReassessmentTimeLeft(prev => {
@@ -374,7 +385,10 @@ export default function DashboardView({ apiResponse, profile, telemetry, onSubmi
           Swipe left <ChevronRight className="h-3 w-3" />
         </span>
       </div>
-      <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 -mx-4 px-4 scrollbar-hide relative group">
+      <div 
+        className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 -mx-4 px-4 scrollbar-hide relative group"
+        onScroll={handleScroll}
+      >
         {/* Pain Trend Chart */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-sm min-w-[85%] md:min-w-[45%] snap-center shrink-0 animate-in zoom-in duration-500">
           <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
@@ -474,6 +488,14 @@ export default function DashboardView({ apiResponse, profile, telemetry, onSubmi
             </ResponsiveContainer>
           </div>
         </div>
+      </div>
+      
+      {/* Scroll Progress Indicator */}
+      <div className="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full mt-2 mb-6 overflow-hidden">
+        <div 
+          className="h-full bg-indigo-500 rounded-full transition-all duration-150 ease-out" 
+          style={{ width: `${Math.max(15, scrollProgress)}%` }} 
+        />
       </div>
 
       {/* Appointment Summary Widget */}
