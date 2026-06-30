@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { TelemetryResponse, UserProfile, ClinicalTelemetry } from '../types';
-import { ShieldCheck, AlertTriangle, ShieldAlert, Droplet, Thermometer, Activity, RefreshCw, BarChart2, BookOpen, Pill, CheckCircle2, Heart, Wind, Clock } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, ShieldAlert, Droplet, Thermometer, Activity, RefreshCw, BarChart2, BookOpen, Pill, CheckCircle2, Heart, Wind, Clock, ChevronRight } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface DashboardViewProps {
@@ -368,7 +368,13 @@ export default function DashboardView({ apiResponse, profile, telemetry, onSubmi
       </div>
 
       {/* Interactive Clinical Charts */}
-      <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 -mx-4 px-4 scrollbar-hide">
+      <div className="flex items-center justify-between mb-[-12px]">
+        <h3 className="font-sans font-bold text-sm text-slate-800 dark:text-slate-200">Clinical Trends</h3>
+        <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+          Swipe left <ChevronRight className="h-3 w-3" />
+        </span>
+      </div>
+      <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 -mx-4 px-4 scrollbar-hide relative group">
         {/* Pain Trend Chart */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-sm min-w-[85%] md:min-w-[45%] snap-center shrink-0 animate-in zoom-in duration-500">
           <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
