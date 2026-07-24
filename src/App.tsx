@@ -47,7 +47,8 @@ import {
   HeartHandshake,
   LogOut,
   Settings,
-  Stethoscope
+  Stethoscope,
+  User
 } from 'lucide-react';
 
 export default function App() {
@@ -625,6 +626,22 @@ export default function App() {
 
       {/* 8. FLOATING CLINICAL CHAT */}
       <GeminiChat />
+
+      {/* 9. TEST ROLE SWITCHER */}
+      <div className="fixed bottom-4 left-4 z-50 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm p-3 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 flex flex-col gap-2 text-xs w-48">
+        <div className="font-bold text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-2">
+          <Settings className="w-4 h-4" /> App Testing Mode
+        </div>
+        <button onClick={() => { setAuthRole('patient'); setAuthStatus('authenticated'); setActiveTab(UiNavigationRoute.DASHBOARD); }} className={`px-2 py-1.5 rounded text-left flex items-center gap-2 transition-colors ${authRole === 'patient' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600'}`}>
+          <User className="w-3.5 h-3.5" /> Patient View
+        </button>
+        <button onClick={() => { setAuthRole('professional'); setAuthStatus('authenticated'); setActiveTab(UiNavigationRoute.DOCTOR); }} className={`px-2 py-1.5 rounded text-left flex items-center gap-2 transition-colors ${authRole === 'professional' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600'}`}>
+          <Stethoscope className="w-3.5 h-3.5" /> Provider View
+        </button>
+        <button onClick={() => { setAuthRole('admin'); setAuthStatus('authenticated'); setActiveTab(UiNavigationRoute.ADMIN); }} className={`px-2 py-1.5 rounded text-left flex items-center gap-2 transition-colors ${authRole === 'admin' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300' : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600'}`}>
+          <ShieldAlert className="w-3.5 h-3.5" /> Admin View
+        </button>
+      </div>
     </div>
   );
 }
