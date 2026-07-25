@@ -180,8 +180,8 @@ export default function DoctorView() {
                 {patients.map((p) => (
                   <motion.div 
                     key={p.id} 
-                    whileHover={{ scale: 1.01, backgroundColor: 'rgba(248, 250, 252, 0.8)' }}
-                    className="p-4 transition-colors flex flex-col sm:flex-row justify-between gap-4 sm:items-center dark:hover:bg-slate-800/80 cursor-default"
+                    whileHover={{ scale: 1.03, backgroundColor: 'rgba(248, 250, 252, 0.8)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
+                    className="p-4 transition-all flex flex-col sm:flex-row justify-between gap-4 sm:items-center dark:hover:bg-slate-800/80 cursor-default rounded-xl m-1"
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-2 h-10 rounded-full ${p.status === 'critical' ? 'bg-red-500' : p.status === 'monitoring' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
@@ -196,8 +196,8 @@ export default function DoctorView() {
                     <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                       <span className="hidden sm:inline">Next Appt: {p.nextAppt}</span>
                       <motion.button 
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={() => setSelectedPatient(p)}
                         className="ml-2 p-2 bg-white hover:bg-indigo-50 dark:bg-slate-800 dark:hover:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 hover:border-indigo-200 dark:hover:border-indigo-800 flex items-center gap-1 text-xs font-semibold cursor-pointer shadow-sm"
                       >

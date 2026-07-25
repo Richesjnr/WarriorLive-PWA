@@ -30,6 +30,10 @@ import VerificationPendingView from './components/VerificationPendingView';
 import { ThemeToggle } from './components/ThemeToggle';
 import GeminiChat from './components/GeminiChat';
 
+import HealthPassportView from './components/HealthPassportView';
+import TelehealthView from './components/TelehealthView';
+import ResearchPortalView from './components/ResearchPortalView';
+
 // Icons
 import {
   Heart,
@@ -48,7 +52,10 @@ import {
   LogOut,
   Settings,
   Stethoscope,
-  User
+  User,
+  Shield,
+  Video,
+  Microscope
 } from 'lucide-react';
 
 export default function App() {
@@ -294,6 +301,12 @@ export default function App() {
         return <KnowledgeHub />;
       case UiNavigationRoute.COMMUNITY:
         return <CommunityView />;
+      case UiNavigationRoute.PASSPORT:
+        return <HealthPassportView profile={profile} />;
+      case UiNavigationRoute.TELEHEALTH:
+        return <TelehealthView />;
+      case UiNavigationRoute.RESEARCH:
+        return <ResearchPortalView profile={profile} />;
       case UiNavigationRoute.DOCTOR:
         return <DoctorView />;
       case UiNavigationRoute.ADMIN:
@@ -360,6 +373,9 @@ export default function App() {
               <nav className="hidden md:flex items-center gap-1">
                 {((authRole === 'patient' || isAdmin) ? [
                   { route: UiNavigationRoute.DASHBOARD, label: 'Dashboard', icon: Activity },
+                  { route: UiNavigationRoute.PASSPORT, label: 'Health Passport', icon: Shield },
+                  { route: UiNavigationRoute.TELEHEALTH, label: 'Telehealth', icon: Video },
+                  { route: UiNavigationRoute.RESEARCH, label: 'Research', icon: Microscope },
                   { route: UiNavigationRoute.LOCATOR, label: 'Care Locator', icon: Compass },
                   { route: UiNavigationRoute.CALENDAR, label: 'Calendar', icon: Calendar },
                   { route: UiNavigationRoute.KNOWLEDGE, label: 'Knowledge Hub', icon: BookOpen },
@@ -473,6 +489,9 @@ export default function App() {
           >
             {((authRole === 'patient' || isAdmin) ? [
               { route: UiNavigationRoute.DASHBOARD, label: 'Dashboard', icon: Activity },
+              { route: UiNavigationRoute.PASSPORT, label: 'Health Passport', icon: Shield },
+              { route: UiNavigationRoute.TELEHEALTH, label: 'Telehealth', icon: Video },
+              { route: UiNavigationRoute.RESEARCH, label: 'Research', icon: Microscope },
               { route: UiNavigationRoute.LOCATOR, label: 'Care Locator', icon: Compass },
               { route: UiNavigationRoute.CALENDAR, label: 'Calendar', icon: Calendar },
               { route: UiNavigationRoute.KNOWLEDGE, label: 'Knowledge Hub', icon: BookOpen },
@@ -627,8 +646,46 @@ export default function App() {
       {/* 8. FLOATING CLINICAL CHAT */}
       <GeminiChat />
 
-      {/* 9. TEST ROLE SWITCHER */}
-      <div className="fixed bottom-4 left-4 z-50 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm p-3 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 flex flex-col gap-2 text-xs w-48">
+      {/* 9. BOTTOM NAVIGATION (MOBILE) */}
+      {!apiResponse.globalEmergencyActive && (
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 pb-safe shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
+          <div className="flex justify-around items-center h-16 px-2">
+            {[
+              { route: UiNavigationRoute.DASHBOARD, label: 'Home', icon: Activity },
+              { route: UiNavigationRoute.PASSPORT, label: 'Passport', icon: Shield },
+              { route: UiNavigationRoute.TELEHEALTH, label: 'Telehealth', icon: Video },
+              { route: UiNavigationRoute.CALENDAR, label: 'Calendar', icon: Calendar },
+            ].map((tab) => {
+              const TabIcon = tab.icon;
+              const isActive = activeTab === tab.route;
+              return (
+                <button
+                  key={tab.route}
+                  onClick={() => setActiveTab(tab.route)}
+                  className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
+                    isActive 
+                      ? 'text-indigo-600 dark:text-indigo-400' 
+                      : 'text-slate-500 dark:text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-300'
+                  }`}
+                >
+                  <motion.div
+                    whileTap={{ scale: 0.9 }}
+                    animate={isActive ? { y: -2 } : { y: 0 }}
+                  >
+                    <TabIcon className={`h-5 w-5 ${isActive ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+                  </motion.div>
+                  <span className={`text-[10px] font-semibold ${isActive ? 'opacity-100' : 'opacity-80'}`}>
+                    {tab.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      )}
+
+      {/* 10. TEST ROLE SWITCHER */}
+      <div className="fixed bottom-20 md:bottom-4 left-4 z-50 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm p-3 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 flex flex-col gap-2 text-xs w-48">
         <div className="font-bold text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-2">
           <Settings className="w-4 h-4" /> App Testing Mode
         </div>

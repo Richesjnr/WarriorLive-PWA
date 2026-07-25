@@ -47,7 +47,10 @@ export enum UiNavigationRoute {
   KNOWLEDGE = '/knowledge',
   COMMUNITY = '/community',
   ADMIN = '/admin',
-  DOCTOR = '/doctor'
+  DOCTOR = '/doctor',
+  PASSPORT = '/passport',
+  TELEHEALTH = '/telehealth',
+  RESEARCH = '/research'
 }
 
 export interface VitalsInsightCard {
