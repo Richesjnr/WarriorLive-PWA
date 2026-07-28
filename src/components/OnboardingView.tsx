@@ -101,20 +101,89 @@ export default function OnboardingView({ onComplete }: OnboardingProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-        {/* Header */}
-        <div className="p-8 text-center bg-indigo-600 relative">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
-              <Activity className="h-8 w-8 text-white" />
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col md:flex-row items-stretch">
+      {/* Marketing / Pitch Section */}
+      <div className="flex-1 bg-indigo-900 text-white p-8 md:p-12 lg:p-16 flex flex-col justify-center relative overflow-hidden">
+        {/* Background Accent */}
+        <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
+          <Activity className="w-64 h-64" />
+        </div>
+        
+        <div className="relative z-10 max-w-xl mx-auto md:mx-0">
+          <div className="inline-block px-3 py-1 bg-indigo-800/50 rounded-full text-indigo-300 font-bold tracking-[0.2em] text-xs uppercase mb-6 border border-indigo-700/50">
+            T H E  S O L U T I O N
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold font-sans mb-6 leading-tight">
+            One PWA. Four pillars.<br />Zero App Store friction.
+          </h1>
+          
+          <div className="space-y-8 mt-12">
+            <div className="flex gap-4">
+              <div className="mt-1 bg-indigo-800/50 p-2 rounded-lg h-fit border border-indigo-700/50">
+                <Shield className="w-6 h-6 text-indigo-300" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white mb-2">Predictive Shield</h3>
+                <p className="text-indigo-200 leading-relaxed text-sm md:text-base">
+                  Gemini 3 Flash reads live weather + hydration signals to flag high-risk crisis windows before they hit.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <div className="mt-1 bg-indigo-800/50 p-2 rounded-lg h-fit border border-indigo-700/50">
+                <Activity className="w-6 h-6 text-rose-300" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white mb-2">Tactical Response</h3>
+                <p className="text-indigo-200 leading-relaxed text-sm md:text-base">
+                  One-touch SOS broadcasts medical data + GPS to the nearest verified SCD clinic and emergency contacts.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <div className="mt-1 bg-indigo-800/50 p-2 rounded-lg h-fit border border-indigo-700/50">
+                <UserPlus className="w-6 h-6 text-amber-300" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white mb-2">The Warrior Circle</h3>
+                <p className="text-indigo-200 leading-relaxed text-sm md:text-base">
+                  AI-moderated community where patients, caregivers, and clinicians share verified, lived-experience insight.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <div className="mt-1 bg-indigo-800/50 p-2 rounded-lg h-fit border border-indigo-700/50">
+                <FileText className="w-6 h-6 text-emerald-300" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white mb-2">Clinical Integrity</h3>
+                <p className="text-indigo-200 leading-relaxed text-sm md:text-base">
+                  FHIR-based medical vault, fully separated from social data—built HIPAA-aware from day one.
+                </p>
+              </div>
             </div>
           </div>
-          <h1 className="text-3xl font-bold font-sans text-white mb-2">WarriorLive</h1>
-          <p className="text-indigo-100 text-sm">Clinical-Grade SCD Optimization Platform</p>
         </div>
+      </div>
 
-        <div className="p-8 pt-6">
+      {/* Auth Section */}
+      <div className="flex-1 flex items-center justify-center p-4 md:p-8 bg-slate-50 dark:bg-slate-900">
+        <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+          {/* Header */}
+          <div className="p-8 text-center bg-indigo-600 relative md:hidden">
+            <div className="flex justify-center mb-4">
+              <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
+                <Activity className="h-8 w-8 text-white" />
+              </div>
+            </div>
+            <h2 className="text-3xl font-bold font-sans text-white mb-2">WarriorLive</h2>
+            <p className="text-indigo-100 text-sm">Clinical-Grade SCD Optimization Platform</p>
+          </div>
+
+          <div className="p-8 pt-6">
           {/* Auth Mode Toggle */}
           <div className="flex justify-center mb-6">
              <div className="flex bg-slate-100 dark:bg-slate-900 rounded-full p-1 border border-slate-200 dark:border-slate-700">
@@ -348,6 +417,7 @@ export default function OnboardingView({ onComplete }: OnboardingProps) {
             </div>
           </form>
         </div>
+      </div>
       </div>
     </div>
   );
