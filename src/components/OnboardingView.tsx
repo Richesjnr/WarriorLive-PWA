@@ -340,9 +340,9 @@ export default function OnboardingView({ onComplete }: OnboardingProps) {
                 <button
                   type="button"
                   onClick={handleGuestMode}
-                  className="w-full py-3 px-4 rounded-xl text-indigo-700 dark:text-indigo-300 font-bold text-sm border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3 px-4 rounded-xl text-indigo-700 dark:text-indigo-300 font-bold text-sm border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  Track Crisis Instantly (Guest Mode)
+                  Take a Tour (Prototype Mode)
                 </button>
               )}
             </div>
